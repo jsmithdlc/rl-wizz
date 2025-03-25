@@ -1,0 +1,14 @@
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+log_level = "info"
+log_cli = true
+log_cli_level = "info"
+log_format = "%(asctime)s %(name)s %(levelname)s %(message)s"
+log_date_format="%Y-%m-%d %H:%M:%S"
+filterwarnings = [
+    'ignore::DeprecationWarning',
+]
+testpaths = [
+    "tests",
+]
