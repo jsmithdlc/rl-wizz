@@ -11,6 +11,38 @@ st.set_page_config(
     layout="wide",
 )
 
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+
+def render_human_prompt(prompt_text):
+    st.markdown(
+        f"""
+    <div style='
+        display: inline-block;
+        float: right;
+        padding: 0.5em;
+        border-radius: 15px;
+        text-align: right;
+        color: {st.get_option("theme.textColor")};
+        background-color: {st.get_option("theme.secondaryBackgroundColor")};
+    '>
+        {prompt_text}
+    </div>
+    """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_chat_history():
+    for role, msg in st.session_state["chat_history"]:
+        if role == "ai":
+            st.text(" ")
+            st.markdown(msg)
+            st.text(" ")
+        else:
+            render_human_prompt(msg)
+
 
 # TODO: replace by LangChain stream response format
 def stream_response(response_text: str):
@@ -21,25 +53,6 @@ def stream_response(response_text: str):
 
 def store_temperature_value():
     st.session_state["model_temperature"] = st.session_state["_model_temperature"]
-
-
-def print_human_prompt(prompt_text):
-    st.markdown(
-        f"""
-    <div style='
-        display: inline-block;
-        float: right;
-        padding: 1em;
-        border-radius: 20px;
-        text-align: right;
-        color: {st.get_option("theme.textColor")};
-        background-color: {st.get_option("theme.secondaryBackgroundColor")};
-    '>
-        {prompt_text}
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
 
 
 model_name = st.sidebar.selectbox("Chat model", ("gpt-4o-mini"))
@@ -70,14 +83,18 @@ for i in range(4):
         type="secondary",
     )
 
+render_chat_history()
+
 prompt = st.chat_input(
     "Ask the RL Wizz to do its magic",
     accept_file=True,
     file_type=["jpg", "jpeg", "png"],
 )
-
 if prompt:
-    print_human_prompt(prompt.text)
-    st.write_stream(
+    render_human_prompt(prompt.text)
+    st.text(" ")
+    llm_response = st.write_stream(
         stream_llm_response(query_workflow_stream(chat_app, prompt.text, "0"))
     )
+    st.text(" ")
+    st.session_state.chat_history.extend([("human", prompt.text), ("ai", llm_response)])

@@ -36,9 +36,12 @@ def init_quiz_app(model_name) -> CompiledStateGraph:
             You are a helpful quizz-maker with the goal of teaching reinforcement learning.
             Be gentle when interacting with user.
 
-            Ask the human a random engaging question to test his/her reinforcement learning knowledge. This can be any of:
+            Ask the human a random engaging question to test his/her reinforcement learning knowledge. The question
+            must be any (chosen randomly) of the following type:
+
             - Conceptual
             - Multiple choice
+            - Understanding of a piece of code
 
             Response should just contain question.
         """
