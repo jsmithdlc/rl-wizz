@@ -12,3 +12,29 @@ filterwarnings = [
 testpaths = [
     "tests",
 ]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
+[project]
+name = "rl-wizz"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Javier Smith",email = "javier.smith.dlc@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "python-dotenv (>=1.0.1,<2.0.0)",
+    "streamlit (>=1.43.2,<2.0.0)",
+    "langchain (>=0.3.21,<0.4.0)",
+    "langgraph (>=0.3.20,<0.4.0)",
+    "langchain-openai (>=0.3.10,<0.4.0)",
+    "streamlit-extras (>=0.6.0,<0.7.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
