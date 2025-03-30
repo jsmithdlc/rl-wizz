@@ -1,6 +1,6 @@
 import streamlit as st
 
-from chat_model import stream_llm_response
+from helpers import stream_llm_response
 from quiz_model import ask_question_stream, evaluate_answer_stream, init_quiz_app
 
 st.set_page_config(
@@ -20,7 +20,7 @@ class QuizStages:
 
 styles = {
     QuizStages.quiz_question: None,
-    QuizStages.quiz_answer: "green",
+    QuizStages.quiz_answer: "blue",
     QuizStages.quiz_evaluation: None,
 }
 

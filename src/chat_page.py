@@ -1,9 +1,9 @@
 import time
 
 import streamlit as st
-from streamlit_extras.stylable_container import stylable_container
 
-from chat_model import init_chat_app, query_workflow_stream, stream_llm_response
+from chat_model import init_chat_app, query_workflow_stream
+from helpers import stream_llm_response
 
 st.set_page_config(
     page_title="Main",

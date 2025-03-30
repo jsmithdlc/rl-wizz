@@ -2,9 +2,10 @@ import datetime
 import os
 
 import streamlit as st
-from models import Base, PastQuestion
 from sqlalchemy import Column, Integer, String, create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+from .models import Base, PastQuestion
 
 DATABASE_URL = "sqlite:///data/database.db"
 
@@ -37,4 +38,4 @@ def add_question(question, solved):
 
 def fetch_past_questions():
     with SessionLocal() as session:
-        return session.query(PastQuestion).all()
+        return session.query(PastQuestion).order_by(PastQuestion.date.desc()).all()

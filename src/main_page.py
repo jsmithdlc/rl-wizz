@@ -1,8 +1,5 @@
 import streamlit as st
 
-from chat_model import stream_llm_response
-from quiz_model import ask_question_stream, evaluate_answer_stream, init_quiz_app
-
 st.set_page_config(
     page_title="Home",
     page_icon="assets/wizzard_penguin.ico",
