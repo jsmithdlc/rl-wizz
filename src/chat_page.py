@@ -56,7 +56,14 @@ def store_temperature_value():
 
 
 model_name = st.sidebar.selectbox("Chat model", ("gpt-4o-mini"))
-chat_app = init_chat_app(model_name)
+chat_app = init_chat_app(
+    model_name,
+    temperature=(
+        st.session_state["model_temperature"]
+        if "model_temperature" in st.session_state
+        else None
+    ),
+)
 
 
 # save temperature in session

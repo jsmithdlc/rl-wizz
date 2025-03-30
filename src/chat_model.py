@@ -14,7 +14,7 @@ load_dotenv()
 
 
 @st.cache_resource
-def init_chat_app(model_name) -> CompiledStateGraph:
+def init_chat_app(model_name, temperature: float | None = None) -> CompiledStateGraph:
     workflow = StateGraph(state_schema=MessagesState)
 
     prompt_template = ChatPromptTemplate(
@@ -30,7 +30,7 @@ def init_chat_app(model_name) -> CompiledStateGraph:
         ]
     )
 
-    model = ChatOpenAI(model_name=model_name)
+    model = ChatOpenAI(model_name=model_name, temperature=temperature)
 
     def call_model(state):
         prompt = prompt_template.invoke(state)
