@@ -1,10 +1,17 @@
-import time
+"""
+Page for chating with LLM. User can upload documents and interact with them through the LLM
+"""
 
 import streamlit as st
 
 from chat.chat_model import init_chat_app, query_workflow_stream
 from chat.vector_store import *
+from chat.vector_store import pdf_to_vector_store
 from helpers import stream_llm_response
+
+RAG_DOCUMENTS_DIR = "./data/rag"
+
+os.makedirs(RAG_DOCUMENTS_DIR, exist_ok=True)
 
 st.set_page_config(
     page_title="Main",
@@ -38,23 +45,77 @@ def render_human_prompt(prompt_text):
 
 
 def render_chat_history():
-    if st.session_state.current_conversation is not None:
-        for role, msg in st.session_state.chat_history[
-            st.session_state.current_conversation
-        ]:
-            if role == "ai":
-                st.text(" ")
-                st.markdown(msg)
-                st.text(" ")
-            else:
-                render_human_prompt(msg)
+    for role, msg in st.session_state.chat_history[
+        st.session_state.current_conversation
+    ]:
+        if role == "ai":
+            st.text(" ")
+            st.markdown(msg)
+            st.text(" ")
+        else:
+            render_human_prompt(msg)
 
 
 def set_conversation(c_index):
     st.session_state.current_conversation = c_index
 
 
+def on_new_conversation():
+    st.session_state.n_conversations += 1
+    st.session_state.chat_history[st.session_state.n_conversations] = []
+    st.session_state.current_conversation = st.session_state.n_conversations
+
+
+def load_pdfs(files):
+    for uploaded_file in files:
+        st.write(f"adding {uploaded_file.name} to database")
+        file_path = os.path.join(RAG_DOCUMENTS_DIR, uploaded_file.name)
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+        pdf_to_vector_store(file_path)
+
+
+@st.dialog("Add material")
+def add_material_dialog():
+    selected_option = st.pills("Type", ["pdf", "website"])
+    if selected_option == "pdf":
+        files_container = st.empty()
+        files = files_container.file_uploader("Upload pdf", accept_multiple_files=True)
+        if len(files) > 0:
+            confirm_container = st.empty()
+            confirm = confirm_container.button("Confirm", args=[files])
+            if confirm:
+                files_container.empty()
+                confirm_container.empty()
+                st.markdown(
+                    ":warning: Please **don't navigate away** while processing files"
+                )
+                with st.status("Processing files"):
+                    load_pdfs(files)
+                st.rerun()
+
+
 def render_chat_buttons():
+    """
+    Render buttons for chat management (creating/choosing conversation, adding new material for RAG)
+    """
+    # buttons for adding new conversation and adding new files
+    cols = st.sidebar.columns(3)
+    cols[0].button(
+        "New",
+        help="Start a new conversation",
+        type="primary",
+        icon="📝",
+        on_click=on_new_conversation,
+    )
+    cols[1].button(
+        "Add",
+        help="Add documents / media to enhance this bot's knowledge",
+        type="primary",
+        icon="📚",
+        on_click=add_material_dialog,
+    )
+    # buttons to pick conversations
     for i in range(1, st.session_state.n_conversations + 1):
         st.sidebar.button(
             f"Conversation {i}",
@@ -66,12 +127,6 @@ def render_chat_buttons():
 
 def store_temperature_value():
     st.session_state["model_temperature"] = st.session_state["_model_temperature"]
-
-
-def on_new_conversation():
-    st.session_state.n_conversations += 1
-    st.session_state.chat_history[st.session_state.n_conversations] = []
-    st.session_state.current_conversation = st.session_state.n_conversations
 
 
 model_name = st.sidebar.selectbox("Chat model", ("gpt-4o-mini"))
@@ -100,20 +155,11 @@ temperature = st.sidebar.slider(
     on_change=store_temperature_value,
 )
 
-st.sidebar.button(
-    "New",
-    help="Start a new conversation",
-    type="primary",
-    icon="📝",
-    on_click=on_new_conversation,
-)
-
-render_chat_history()
-
 render_chat_buttons()
 
-
+# Layout for current conversation
 if st.session_state.current_conversation is not None:
+    render_chat_history()
     prompt = st.chat_input(
         "Ask the RL Wizz to do its magic",
         accept_file=True,

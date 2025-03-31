@@ -24,7 +24,7 @@ authors = [
     {name = "Javier Smith",email = "javier.smith.dlc@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "python-dotenv (>=1.0.1,<2.0.0)",
     "streamlit (>=1.43.2,<2.0.0)",
@@ -37,7 +37,7 @@ dependencies = [
     "unstructured[pdf] (>=0.17.2,<0.18.0)"
 ]
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[project.optional-dependencies]
+local = [
+    "langchain-unstructured>=0.1.6",
+]

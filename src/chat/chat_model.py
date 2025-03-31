@@ -50,12 +50,6 @@ def init_chat_app(model_name, temperature: float | None = None) -> CompiledState
     return workflow
 
 
-def stream_llm_response(stream: Iterator[dict[str, Any] | Any]):
-    for chunk, metadata in stream:
-        if isinstance(chunk, AIMessage):
-            yield chunk.content
-
-
 def query_workflow_stream(
     wf: CompiledStateGraph, query: str, thread_id: str
 ) -> Iterator[dict[str, Any] | Any]:
