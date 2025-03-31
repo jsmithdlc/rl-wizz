@@ -11,7 +11,12 @@
 
 ## Configuration
 
-*lorem ipsum incarnatus*
+For pdf-parsing for RAG use, install poppler (pdf-analysis) and tesseract (ocr):
+
+```bash
+brew install poppler tesseract
+```
+
 
 ## Development
 

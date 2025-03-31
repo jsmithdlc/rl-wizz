@@ -1,7 +1,7 @@
 import streamlit as st
 
 from helpers import stream_llm_response
-from quiz_model import ask_question_stream, evaluate_answer_stream, init_quiz_app
+from quiz.quiz_model import ask_question_stream, evaluate_answer_stream, init_quiz_app
 
 st.set_page_config(
     page_title="Quiz",
