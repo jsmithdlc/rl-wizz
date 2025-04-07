@@ -4,10 +4,9 @@ Page for chating with LLM. User can upload documents and interact with them thro
 
 import streamlit as st
 
-from chat.chat_model import init_chat_app, query_workflow_stream
+from chat.chat_model import init_chat_app, query_workflow_stream, stream_chat_response
 from chat.vector_store import *
 from chat.vector_store import pdf_to_vector_store
-from helpers import stream_llm_response
 
 RAG_DOCUMENTS_DIR = "./data/rag"
 
@@ -171,7 +170,7 @@ if st.session_state.current_conversation is not None:
         render_human_prompt(prompt.text)
         st.text(" ")
         llm_response = st.write_stream(
-            stream_llm_response(
+            stream_chat_response(
                 query_workflow_stream(chat_app, prompt.text, current_conversation)
             )
         )
