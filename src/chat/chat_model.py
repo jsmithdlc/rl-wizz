@@ -4,10 +4,13 @@ from typing import Annotated, Any, Iterator, List, TypedDict
 import streamlit as st
 from dotenv import load_dotenv
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors.chain_filter import LLMChainFilter
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+from langchain_core.tools import create_retriever_tool, tool
+from langchain_openai import ChatOpenAI, OpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -18,20 +21,49 @@ from chat.vector_store import vector_store
 load_dotenv()
 
 
+def _parse_retrieved_into_context(retrieved_docs: list[Document]) -> str:
+    meta_keys = {
+        "category",
+        "source",
+        "languages",
+        "page_number",
+        "element_id",
+        "parent_id",
+        "filetype",
+    }
+    docs_strs = []
+    for doc in retrieved_docs:
+        filtered_meta = " ; ".join(
+            [f"{k}: {val}" for k, val in doc.metadata.items() if k in meta_keys]
+        )
+        docs_strs.append(
+            (f"Source: ({filtered_meta})\n" f"Content: {doc.page_content}")
+        )
+    return "\n\n".join(docs_strs)
+
+
 @st.cache_resource
 def init_chat_app(model_name, temperature: float | None = None) -> CompiledStateGraph:
     workflow = StateGraph(state_schema=MessagesState)
     model = ChatOpenAI(model_name=model_name, temperature=temperature)
+    llm = OpenAI(temperature=0)
+
+    _filter = LLMChainFilter.from_llm(llm)
+    base_retriever = vector_store.as_retriever(
+        search_kwargs={"k": 5, "filter": {"detection_class_prob": {"$gte": 0.75}}}
+    )
+    compression_retriever = ContextualCompressionRetriever(
+        base_compressor=_filter, base_retriever=base_retriever
+    )
 
     @tool(response_format="content_and_artifact")
     def retrieve(query: str):
-        """Retrieve information related to a query."""
-        retrieved_docs = vector_store.similarity_search(query, k=8)
-        serialized = "\n\n".join(
-            (f"Source: {doc.metadata}\n" f"Content: {doc.page_content}")
-            for doc in retrieved_docs
-        )
+        """Retrieve information related to a query"""
+        retrieved_docs = compression_retriever.invoke(query)
+        serialized = _parse_retrieved_into_context(retrieved_docs)
         return serialized, retrieved_docs
+
+    tools = ToolNode([retrieve])
 
     # Step 1: query retrieval or respond directly
     def query_or_respond(state: MessagesState):
@@ -39,9 +71,6 @@ def init_chat_app(model_name, temperature: float | None = None) -> CompiledState
         llm_with_retrieval = model.bind_tools([retrieve])
         response = llm_with_retrieval.invoke(state["messages"])
         return {"messages": [response]}
-
-    # Step 2: Execute the retrieval.
-    tools = ToolNode([retrieve])
 
     def generate(state: MessagesState):
         """Generate answer."""
