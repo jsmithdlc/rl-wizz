@@ -60,5 +60,5 @@ def pdf_to_vector_store(pdf_path: str):
     for doc in loader_local.lazy_load():
         del doc.metadata["coordinates"]
         docs.append(doc)
-    logging.info(f"Retrieved: {len(docs)} documents from pdf")
+    logging.info("Retrieved: %s documents from pdf", len(docs))
     _add_documents_to_vector_store(docs)

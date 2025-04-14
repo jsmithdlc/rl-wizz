@@ -1,4 +1,8 @@
-from typing import Annotated, Any, Iterator
+"""
+Interface to interact with the Quiz application
+"""
+
+from typing import Any, Iterator
 
 import streamlit as st
 from dotenv import load_dotenv

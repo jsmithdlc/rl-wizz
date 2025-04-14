@@ -1,9 +1,11 @@
-import datetime
-import os
+"""
+Module for communicating to SQLite database of QA and other
+"""
 
-import streamlit as st
-from sqlalchemy import Column, Integer, String, create_engine, event
-from sqlalchemy.orm import declarative_base, sessionmaker
+import datetime
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from .models import Base, PastQuestion
 
@@ -11,23 +13,19 @@ DATABASE_URL = "sqlite:///data/database.db"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
-
-# Set SQLite PRAGMA for improved persistence & concurrency
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("PRAGMA synchronous=EXTRA;")
-    cursor.close()
-
-
 SessionLocal = sessionmaker(bind=engine)
 
 Base.metadata.create_all(engine)
 
 
 # Functions to interact with DB
-def add_question(question, solved):
+def add_question(question: str, solved: bool):
+    """Stores new quiz question in database
+
+    Args:
+        question (str): question to store
+        solved (bool): whether user answered this question correctly
+    """
     with SessionLocal() as session:
         user = PastQuestion(
             question=question, solved=solved, date=datetime.datetime.now()
@@ -36,6 +34,11 @@ def add_question(question, solved):
         session.commit()
 
 
-def fetch_past_questions():
+def fetch_past_questions() -> list[PastQuestion]:
+    """Fetch all past questions
+    Returns:
+        list[PastQuestion]: list of stored questions
+    """
+
     with SessionLocal() as session:
         return session.query(PastQuestion).order_by(PastQuestion.date.desc()).all()

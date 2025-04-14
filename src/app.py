@@ -1,3 +1,7 @@
+"""
+Application navigation
+"""
+
 import streamlit as st
 import torch
 

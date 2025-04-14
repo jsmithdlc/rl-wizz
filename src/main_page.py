@@ -1,3 +1,7 @@
+"""
+Sort of like the home page for the RL Wizz web-app
+"""
+
 import streamlit as st
 
 st.set_page_config(
@@ -15,6 +19,7 @@ container.image(
     caption="The RL wizz exploring a virgin landscape",
 )
 container.markdown(
-    "This is a mighty and powerful wizard that will guide you through the convoluted maze of reinforcement learning "
-    "and help your through your experimentation and adventure into this fantastic realm."
+    "This is a mighty and powerful wizard that will guide you through "
+    "the convoluted maze of reinforcement learning and help your through "
+    "your experimentation and adventure into this fantastic realm."
 )

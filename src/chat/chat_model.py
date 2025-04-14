@@ -1,18 +1,19 @@
-import pprint
-from typing import Annotated, Any, Iterator, List, TypedDict
+"""
+Interface to interact with chat model
+"""
+
+from typing import Any, Iterator
 
 import streamlit as st
 from dotenv import load_dotenv
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors.chain_filter import LLMChainFilter
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_core.prompts import PromptTemplate
-from langchain_core.tools import create_retriever_tool, tool
+from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI, OpenAI
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import END, START, MessagesState, StateGraph
+from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
@@ -43,7 +44,18 @@ def _parse_retrieved_into_context(retrieved_docs: list[Document]) -> str:
 
 
 @st.cache_resource
-def init_chat_app(model_name, temperature: float | None = None) -> CompiledStateGraph:
+def init_chat_app(
+    model_name: str, temperature: float | None = None
+) -> CompiledStateGraph:
+    """Initialize chat LangGraph application
+
+    Args:
+        model_name (str): name of the OpenAI's LLM model to use
+        temperature (float | None, optional): temperature setting for the chat model. Defaults to None.
+
+    Returns:
+        CompiledStateGraph: chat LangGraph application
+    """
     workflow = StateGraph(state_schema=MessagesState)
     model = ChatOpenAI(model_name=model_name, temperature=temperature)
     llm = OpenAI(temperature=0)
@@ -85,7 +97,8 @@ def init_chat_app(model_name, temperature: float | None = None) -> CompiledState
         # Format into prompt
         docs_content = "\n\n".join(doc.content for doc in tool_messages)
         system_message_content = (
-            "You are a helpful assistant, expert in reinforcement learning and meant for question-answering tasks."
+            "You are a helpful assistant, "
+            "expert in reinforcement learning and meant for question-answering tasks."
             "Use the following pieces of retrieved context to answer "
             "the question. If you don't know the answer, say that you "
             "don't know."
@@ -128,7 +141,7 @@ def init_chat_app(model_name, temperature: float | None = None) -> CompiledState
 
 
 def stream_chat_response(stream: Iterator[dict[str, Any] | Any]):
-    for chunk, metadata in stream:
+    for chunk, _ in stream:
         if isinstance(chunk, AIMessage):
             yield chunk.content
 
