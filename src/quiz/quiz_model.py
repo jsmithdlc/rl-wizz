@@ -21,6 +21,8 @@ DATE_FORMAT = "%d/%m/%Y"
 
 
 class QuizState(TypedDict):
+    """Quiz data"""
+
     question: str | None = None
     answer: str | None = None
     model_evaluation: str | None = None
@@ -30,7 +32,16 @@ class QuizState(TypedDict):
 # TODO: make quiz bot consider past-interactions and success/failure in answering these.
 # and adjust difficulty of question based on answers to these
 @st.cache_resource
-def init_quiz_app(model_name) -> CompiledStateGraph:
+def init_quiz_app(model_name: str) -> CompiledStateGraph:
+    """Initialized a LangGraph app for quizzing user
+
+    Args:
+        model_name (str): LLM model name to use for the quiz
+
+    Returns:
+        CompiledStateGraph: LangGraph quiz app
+    """
+
     workflow = StateGraph(state_schema=MessagesState)
 
     model = ChatOpenAI(model_name=model_name)
@@ -122,6 +133,9 @@ def init_quiz_app(model_name) -> CompiledStateGraph:
 
 
 def ask_question_stream(wf: CompiledStateGraph) -> Iterator[dict[str, Any] | Any]:
+    """
+    Stream question formulation
+    """
     config = {"configurable": {"thread_id": "quizzer"}}
     return wf.stream(QuizState(), config=config, stream_mode="messages")
 
@@ -129,5 +143,8 @@ def ask_question_stream(wf: CompiledStateGraph) -> Iterator[dict[str, Any] | Any
 def evaluate_answer_stream(
     wf: CompiledStateGraph, answer: str
 ) -> Iterator[dict[str, Any] | Any]:
+    """
+    Stream quiz evaluation and explanation
+    """
     config = {"configurable": {"thread_id": "quizzer"}}
     return wf.stream(Command(resume=answer), config=config, stream_mode="messages")

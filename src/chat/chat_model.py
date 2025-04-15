@@ -51,7 +51,8 @@ def init_chat_app(
 
     Args:
         model_name (str): name of the OpenAI's LLM model to use
-        temperature (float | None, optional): temperature setting for the chat model. Defaults to None.
+        temperature (float | None, optional): temperature setting for the chat model.
+        Defaults to None.
 
     Returns:
         CompiledStateGraph: chat LangGraph application
@@ -140,15 +141,12 @@ def init_chat_app(
     return workflow
 
 
-def stream_chat_response(stream: Iterator[dict[str, Any] | Any]):
-    for chunk, _ in stream:
-        if isinstance(chunk, AIMessage):
-            yield chunk.content
-
-
-def query_workflow_stream(
+def chat_stream(
     wf: CompiledStateGraph, query: str, thread_id: str
 ) -> Iterator[dict[str, Any] | Any]:
+    """
+    Trigger chat conversation stream
+    """
     config = {"configurable": {"thread_id": thread_id}}
     messages = [HumanMessage(query)]
     return wf.stream({"messages": messages}, config=config, stream_mode="messages")
