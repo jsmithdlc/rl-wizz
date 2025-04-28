@@ -1,3 +1,5 @@
+"""Module for managing vector storage of documents using Pinecone and LangChain."""
+
 import logging
 import os
 

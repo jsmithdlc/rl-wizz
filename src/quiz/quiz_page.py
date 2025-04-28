@@ -1,3 +1,8 @@
+"""
+Streamlit page for an interactive quiz application that
+generates questions and evaluates answers using LLM.
+"""
+
 import streamlit as st
 
 from helpers import stream_llm_response
