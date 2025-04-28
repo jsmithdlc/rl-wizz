@@ -34,11 +34,7 @@ record_manager.create_schema()
 
 # TODO: avoid adding duplicate content from same pdf with different sources.
 def _add_documents_to_vector_store(documents: list[Document]):
-    """Adds a list of langchain documents into the specified vector store
-
-    Args:
-        documents (list[Document]): list of documents to add
-    """
+    """Add documents to vector store"""
     index(
         documents,
         record_manager=record_manager,
@@ -46,21 +42,16 @@ def _add_documents_to_vector_store(documents: list[Document]):
         cleanup="incremental",
         source_id_key="source",
     )
-    logging.info("successfully added documents to pinecone vector database")
+    logging.info("Added documents to pinecone DB")
 
 
 def pdf_to_vector_store(pdf_path: str):
-    """Loads a pdf, collects documents from it and stores them into the vector store
-
-    Args:
-        pdf_path (str): _description_
-    """
-    loader_local = UnstructuredLoader(
+    """Load PDF and store in vector store"""
+    loader = UnstructuredLoader(
         file_path=pdf_path, strategy="hi_res", post_processors=[clean_extra_whitespace]
     )
-    docs = []
-    for doc in loader_local.lazy_load():
-        del doc.metadata["coordinates"]
-        docs.append(doc)
+    docs = [
+        doc for doc in loader.lazy_load() if not doc.metadata.pop("coordinates", None)
+    ]
     logging.info("Retrieved: %s documents from pdf", len(docs))
     _add_documents_to_vector_store(docs)
