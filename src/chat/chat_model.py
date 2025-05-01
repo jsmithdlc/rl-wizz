@@ -2,6 +2,7 @@
 Interface to interact with chat model
 """
 
+import sqlite3
 from typing import Any, Iterator
 
 import streamlit as st
@@ -12,7 +13,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI, OpenAI
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -132,8 +133,9 @@ def init_chat_app(
     workflow.add_edge("tools", "generate")
     workflow.add_edge("generate", END)
 
-    # add in memory
-    memory = MemorySaver()
+    # add SQLite memory checkpoint
+    conn = sqlite3.connect("data/conversations.db", check_same_thread=False)
+    memory = SqliteSaver(conn)
 
     # compile graph
     workflow = workflow.compile(checkpointer=memory)

@@ -6,6 +6,11 @@ import os
 
 import streamlit as st
 
+from chat.chat_db import (
+    load_conversations_as_dict,
+    save_conversation,
+    update_conversation,
+)
 from chat.chat_model import chat_stream, init_chat_app
 from chat.vector_store import pdf_to_vector_store
 from helpers import stream_llm_response
@@ -21,8 +26,10 @@ st.set_page_config(
 )
 
 if "chat_history" not in st.session_state:
-    st.session_state.chat_history = {}
-    st.session_state.n_conversations = 0
+    st.session_state.chat_history = load_conversations_as_dict()
+    st.session_state.n_conversations = max(
+        st.session_state.chat_history.keys(), default=0
+    )
     st.session_state.current_conversation = None
 
 
@@ -65,6 +72,7 @@ def on_new_conversation():
     st.session_state.n_conversations += 1
     st.session_state.chat_history[st.session_state.n_conversations] = []
     st.session_state.current_conversation = st.session_state.n_conversations
+    save_conversation(st.session_state.n_conversations, [])
 
 
 def load_pdfs(files):
@@ -177,6 +185,8 @@ if st.session_state.current_conversation is not None:
             )
         )
         st.text(" ")
-        st.session_state.chat_history[current_conversation].extend(
-            [("human", prompt.text), ("ai", llm_response)]
+        new_messages = [("human", prompt.text), ("ai", llm_response)]
+        st.session_state.chat_history[current_conversation].extend(new_messages)
+        update_conversation(
+            current_conversation, st.session_state.chat_history[current_conversation]
         )
