@@ -1,7 +1,7 @@
 import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Column, DateTime, Integer, create_engine, text
+from sqlalchemy import JSON, Column, DateTime, String, create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -23,7 +23,7 @@ class Conversation(Base):
     """A conversation between a user and an AI"""
 
     __tablename__ = "conversations"
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True)
     date = Column(DateTime, default=datetime.datetime.now)
     messages = Column(JSON)
 
@@ -61,7 +61,7 @@ def load_conversations_as_dict() -> list[dict[str, Any]]:
         return {conv.id: conv.messages for conv in conversations}
 
 
-def save_conversation(conv_id: int, messages: list[tuple[str, str]]):
+def save_conversation(conv_id: str, messages: list[tuple[str, str]]):
     """Save a conversation to the database"""
     conversation = Conversation(
         id=conv_id, messages=messages, date=datetime.datetime.now()
@@ -73,7 +73,7 @@ def save_conversation(conv_id: int, messages: list[tuple[str, str]]):
     return conversation
 
 
-def update_conversation(conv_id: int, messages: list[tuple[str, str]]):
+def update_conversation(conv_id: str, messages: list[tuple[str, str]]):
     """Update a conversation in the database"""
     with SessionLocal() as session:
         conversation = (
@@ -85,3 +85,10 @@ def update_conversation(conv_id: int, messages: list[tuple[str, str]]):
             session.refresh(conversation)
             return conversation
         return None
+
+
+def delete_conversation(conv_id: str):
+    """Deletes conversation from database"""
+    with SessionLocal() as session:
+        session.query(Conversation).filter(Conversation.id == conv_id).delete()
+        session.commit()

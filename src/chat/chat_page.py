@@ -3,10 +3,12 @@ Page for chating with LLM. User can upload documents and interact with them thro
 """
 
 import os
+import uuid
 
 import streamlit as st
 
 from chat.chat_db import (
+    delete_conversation,
     load_conversations_as_dict,
     save_conversation,
     update_conversation,
@@ -27,13 +29,14 @@ st.set_page_config(
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = load_conversations_as_dict()
-    st.session_state.n_conversations = max(
-        st.session_state.chat_history.keys(), default=0
-    )
+    st.session_state.conversation_ids = list(st.session_state.chat_history.keys())
     st.session_state.current_conversation = None
 
 
-def render_human_prompt(prompt_text):
+def render_human_msg(prompt_text: str):
+    """
+    Renders the user-generated text right-aligned in the chat interface
+    """
     st.markdown(
         f"""
     <div style='
@@ -61,18 +64,40 @@ def render_chat_history():
             st.markdown(msg)
             st.text(" ")
         else:
-            render_human_prompt(msg)
+            render_human_msg(msg)
 
 
-def set_conversation(c_index):
+def on_set_conversation(c_index: str):
+    """Sets conversation with id: `c_index` as the current selected one"""
     st.session_state.current_conversation = c_index
 
 
+@st.dialog("Confirm deletion")
+def on_delete_conversation(c_index: str):
+    """Prompts confirmation dialog for erasing conversation with id `c_index`"""
+    st.markdown(
+        "**This conversation will be deleted** from the database and will not be accessible later"
+    )
+    confirm = st.button("Confirm")
+    if confirm:
+        st.session_state.current_conversation = (
+            None
+            if st.session_state.current_conversation == c_index
+            else st.session_state.current_conversation
+        )
+        del st.session_state.chat_history[c_index]
+        st.session_state.conversation_ids.remove(c_index)
+        delete_conversation(c_index)
+        st.rerun()
+
+
 def on_new_conversation():
-    st.session_state.n_conversations += 1
-    st.session_state.chat_history[st.session_state.n_conversations] = []
-    st.session_state.current_conversation = st.session_state.n_conversations
-    save_conversation(st.session_state.n_conversations, [])
+    """Adds a new conversation with a random id"""
+    new_id = str(uuid.uuid4())
+    st.session_state.conversation_ids.append(new_id)
+    st.session_state.chat_history[new_id] = []
+    st.session_state.current_conversation = new_id
+    save_conversation(new_id, [])
 
 
 def load_pdfs(files):
@@ -125,13 +150,25 @@ def render_chat_buttons():
         on_click=add_material_dialog,
     )
     # buttons to pick conversations
-    for i in range(1, st.session_state.n_conversations + 1):
-        st.sidebar.button(
-            f"Conversation {i}",
-            use_container_width=True,
-            on_click=set_conversation,
-            args=[i],
-        )
+    for conv_id in st.session_state.conversation_ids:
+        col1, col2 = st.sidebar.columns([0.9, 0.05])
+        with col1:
+            st.button(
+                f"Conversation {conv_id[-4:]}",
+                on_click=on_set_conversation,
+                use_container_width=True,
+                args=[conv_id],
+                key=f"conv_selector_{conv_id}",
+            )
+        with col2:
+            st.button(
+                ":wastebasket:",
+                key=f"conv_deletor_{conv_id}",
+                on_click=on_delete_conversation,
+                args=[conv_id],
+                use_container_width=True,
+                type="tertiary",
+            )
 
 
 def store_temperature_value():
@@ -177,7 +214,7 @@ if st.session_state.current_conversation is not None:
 
     if prompt:
         current_conversation = st.session_state.current_conversation
-        render_human_prompt(prompt.text)
+        render_human_msg(prompt.text)
         st.text(" ")
         llm_response = st.write_stream(
             stream_llm_response(
@@ -186,6 +223,7 @@ if st.session_state.current_conversation is not None:
         )
         st.text(" ")
         new_messages = [("human", prompt.text), ("ai", llm_response)]
+        # update session state with new messages
         st.session_state.chat_history[current_conversation].extend(new_messages)
         update_conversation(
             current_conversation, st.session_state.chat_history[current_conversation]

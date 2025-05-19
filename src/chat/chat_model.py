@@ -23,6 +23,12 @@ from chat.vector_store import vector_store
 load_dotenv()
 
 
+BASE_SYSTEM_MSG = (
+    "You are a helpful assistant, whose purpose is to help in learning and exploring the "
+    "area of reinforcement learning through question-answering tasks."
+)
+
+
 def _parse_retrieved_into_context(retrieved_docs: list[Document]) -> str:
     meta_keys = {
         "category",
@@ -83,7 +89,8 @@ def init_chat_app(
     def query_or_respond(state: MessagesState):
         """Generate tool call for retrieval or respond."""
         llm_with_retrieval = model.bind_tools([retrieve])
-        response = llm_with_retrieval.invoke(state["messages"])
+        prompt = [SystemMessage(BASE_SYSTEM_MSG)] + state["messages"]
+        response = llm_with_retrieval.invoke(prompt)
         return {"messages": [response]}
 
     def generate(state: MessagesState):
@@ -99,8 +106,7 @@ def init_chat_app(
         # Format into prompt
         docs_content = "\n\n".join(doc.content for doc in tool_messages)
         system_message_content = (
-            "You are a helpful assistant, "
-            "expert in reinforcement learning and meant for question-answering tasks."
+            f"{BASE_SYSTEM_MSG}"
             "Use the following pieces of retrieved context to answer "
             "the question. If you don't know the answer, say that you "
             "don't know."
