@@ -49,7 +49,9 @@ def _add_documents_to_vector_store(documents: list[Document]):
 
 def pdf_to_vector_store(pdf_path: str):
     """Load PDF and store in vector store"""
-    loader = UnstructuredLoader(file_path=pdf_path, strategy="hi_res")
+    loader = UnstructuredLoader(
+        file_path=pdf_path, strategy="hi_res", post_processors=[clean_extra_whitespace]
+    )
     docs = [doc for doc in loader.lazy_load() if doc.metadata.pop("coordinates", None)]
     logging.info("Retrieved: %s documents from pdf", len(docs))
     if len(docs) > 0:
