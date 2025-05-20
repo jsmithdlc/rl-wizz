@@ -19,6 +19,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from chat.vector_store import vector_store
+from database.database import update_chat_source_n_retrieved
 
 load_dotenv()
 
@@ -48,6 +49,23 @@ def _parse_retrieved_into_context(retrieved_docs: list[Document]) -> str:
             (f"Source: ({filtered_meta})\n" f"Content: {doc.page_content}")
         )
     return "\n\n".join(docs_strs)
+
+
+def _update_source_retrieval_count(documents: list[Document]):
+    """
+    Increases the retrival count of retrieved sources
+
+    Args:
+        documents (list[Document]): retrieved documents
+    """
+    retrieved_sources: dict[str, any] = {}
+    for doc in documents:
+        source_name = doc.metadata["source"]
+        if source_name not in retrieved_sources:
+            retrieved_sources[source_name] = 0
+        retrieved_sources[source_name] += 1
+    for source, retrieval_count in retrieved_sources.items():
+        update_chat_source_n_retrieved(source, retrieval_count)
 
 
 @st.cache_resource
@@ -81,6 +99,7 @@ def init_chat_app(
         """Retrieve information related to a query"""
         retrieved_docs = compression_retriever.invoke(query)
         serialized = _parse_retrieved_into_context(retrieved_docs)
+        _update_source_retrieval_count(retrieved_docs)
         return serialized, retrieved_docs
 
     tools = ToolNode([retrieve])
