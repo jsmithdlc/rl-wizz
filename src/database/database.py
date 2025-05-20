@@ -60,6 +60,12 @@ def fetch_chat_source_by_name(source_name: str) -> ChatSource | None:
         )
 
 
+def fetch_all_chat_source() -> list[ChatSource]:
+    """Fetches all ChatSource stored in database"""
+    with SessionLocal() as session:
+        return session.query(ChatSource).all()
+
+
 def add_chat_source(source_name: str, doc_type: str, n_related_documents: int):
     """Stores new chat datasource. Replace existing one if already exists
 
@@ -68,9 +74,13 @@ def add_chat_source(source_name: str, doc_type: str, n_related_documents: int):
         doc_type (str): document type
         n_related_documents (int): number of extracted documents associated to this datasource
     """
-    chat_source = fetch_chat_source_by_name(source_name)
-    if not chat_source:
-        with SessionLocal() as session:
+    with SessionLocal() as session:
+        chat_source = (
+            session.query(ChatSource)
+            .filter(ChatSource.source_name == source_name)
+            .first()
+        )
+        if not chat_source:
             chat_source = ChatSource(
                 source_name=source_name,
                 doc_type=doc_type,
@@ -79,8 +89,7 @@ def add_chat_source(source_name: str, doc_type: str, n_related_documents: int):
             )
             session.add(chat_source)
             session.commit()
-    else:
-        with SessionLocal() as session:
+        else:
             chat_source.doc_type = doc_type
             chat_source.n_related_documents = n_related_documents
             chat_source.date_added = datetime.datetime.now()
@@ -95,10 +104,14 @@ def update_chat_source_n_retrieved(source_name: str, new_calls: int):
         source_name (str): data source name
         new_calls (int): count of new retrievals for this data source
     """
-    chat_source = fetch_chat_source_by_name(source_name)
-    if not chat_source:
-        return
     with SessionLocal() as session:
+        chat_source = (
+            session.query(ChatSource)
+            .filter(ChatSource.source_name == source_name)
+            .first()
+        )
+        if not chat_source:
+            return
         chat_source.n_times_retrieved += new_calls
         session.commit()
         session.refresh(chat_source)

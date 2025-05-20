@@ -37,8 +37,14 @@ record_manager.create_schema()
 # TODO: avoid adding duplicate content from same pdf with different sources.
 def _add_documents_to_vector_store(documents: list[Document]):
     """Add documents to vector store"""
+    prep_docs = []
+    for doc in documents:
+        if "links" in doc.metadata:
+            del doc.metadata["links"]
+        prep_docs.append(doc)
+
     index(
-        documents,
+        prep_docs,
         record_manager=record_manager,
         vector_store=vector_store,
         cleanup="incremental",
@@ -55,9 +61,9 @@ def pdf_to_vector_store(pdf_path: str):
     docs = [doc for doc in loader.lazy_load() if doc.metadata.pop("coordinates", None)]
     logging.info("Retrieved: %s documents from pdf", len(docs))
     if len(docs) > 0:
+        _add_documents_to_vector_store(docs)
         add_chat_source(
             source_name=pdf_path,
             doc_type="pdf",
             n_related_documents=len(docs),
         )
-        _add_documents_to_vector_store(docs)

@@ -2,6 +2,7 @@
 Interface to interact with chat model
 """
 
+import logging
 import sqlite3
 from typing import Any, Iterator
 
@@ -97,6 +98,7 @@ def init_chat_app(
     @tool(response_format="content_and_artifact")
     def retrieve(query: str):
         """Retrieve information related to a query"""
+        logging.info("triggering document retrieval")
         retrieved_docs = compression_retriever.invoke(query)
         serialized = _parse_retrieved_into_context(retrieved_docs)
         _update_source_retrieval_count(retrieved_docs)
