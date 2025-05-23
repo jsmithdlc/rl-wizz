@@ -228,3 +228,19 @@ if st.session_state.current_conversation is not None:
         update_conversation(
             current_conversation, st.session_state.chat_history[current_conversation]
         )
+else:
+    _, col2, _ = st.columns((0.2, 0.6, 0.2), vertical_alignment="center")
+    container = col2.container(border=True)
+    container.markdown("""Hi there 👋 here you can:""")
+    container.button(
+        "Start a new conversation.",
+        type="secondary",
+        icon="📝",
+        on_click=on_new_conversation,
+    )
+    container.button(
+        "Add new sources to the chatbot's knowledge base.",
+        type="secondary",
+        icon="📚",
+        on_click=add_material_dialog,
+    )

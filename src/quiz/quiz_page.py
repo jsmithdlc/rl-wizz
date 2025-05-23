@@ -73,8 +73,9 @@ def answer_stage():
         and QuizStageNames.quiz_evaluation not in st.session_state
     ):
         text_input_container = st.empty()
-        answer = text_input_container.text_input("Your answer here", value=None)
+        answer = text_input_container.text_area("Your answer here", value=None)
         if answer is not None:
+            answer = answer.replace("\n", "     ")
             text_input_container.empty()
             st.session_state[QuizStageNames.quiz_answer] = answer
             render_stored_component(QuizStageNames.quiz_answer)
