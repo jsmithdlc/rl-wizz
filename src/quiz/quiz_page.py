@@ -5,7 +5,7 @@ generates questions and evaluates answers using LLM.
 
 import streamlit as st
 
-from helpers import stream_llm_response
+from helpers import stream_llm_response_with_status
 from quiz.quiz_model import ask_question_stream, evaluate_answer_stream, init_quiz_app
 
 st.set_page_config(
@@ -55,7 +55,9 @@ def question_stage():
         render_stored_component(QuizStageNames.quiz_question)
     else:
         full_question = st.write_stream(
-            stream_llm_response(ask_question_stream(quiz_app))
+            stream_llm_response_with_status(
+                ask_question_stream(quiz_app), "Generating quiz question ..."
+            )
         )
         st.session_state[QuizStageNames.quiz_question] = full_question
 
@@ -92,10 +94,11 @@ def evaluation_stage():
         and QuizStageNames.quiz_evaluation not in st.session_state
     ):
         evaluation = st.write_stream(
-            stream_llm_response(
+            stream_llm_response_with_status(
                 evaluate_answer_stream(
                     quiz_app, st.session_state[QuizStageNames.quiz_answer]
-                )
+                ),
+                "Evaluating your answer ...",
             )
         )
         st.session_state.quiz_evaluation = evaluation
