@@ -11,13 +11,16 @@ torch.classes.__path__ = []
 
 # Define the pages
 main_page = st.Page("main_page.py", title="Main Page", icon=":material/home:")
-chat_page = st.Page("chat/chat_page.py", title="Chats", icon="📇")
+chat_page = st.Page("chat/chat_page.py", title="Chat", icon="📇")
 chat_knowledge_page = st.Page(
     "chat/chat_knowledge.py", title="Chat RAG Sources", icon="🧐"
 )
 quiz_page = st.Page("quiz/quiz_page.py", title="Knowledge Quiz", icon="🧠")
+quiz_results = st.Page(
+    "quiz/quiz_results_page.py", title="Knowledge Quiz Results", icon="✅"
+)
 
-pg = st.navigation([main_page, chat_page, chat_knowledge_page, quiz_page])
+pg = st.navigation([main_page, chat_page, chat_knowledge_page, quiz_page, quiz_results])
 
 
 pg.run()

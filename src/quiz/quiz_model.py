@@ -29,8 +29,6 @@ class QuizState(TypedDict):
     solved: bool | None = None
 
 
-# TODO: make quiz bot consider past-interactions and success/failure in answering these.
-# and adjust difficulty of question based on answers to these
 @st.cache_resource
 def init_quiz_app(model_name: str) -> CompiledStateGraph:
     """Initialized a LangGraph app for quizzing user
