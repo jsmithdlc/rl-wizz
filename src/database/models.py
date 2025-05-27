@@ -16,6 +16,8 @@ class PastQuestion(Base):
     __tablename__ = "past_questions"
     id = Column(Integer, primary_key=True)
     question = Column(String)
+    answer = Column(String)
+    feedback = Column(String)
     solved = Column(Boolean)
     date = Column(DateTime, unique=True)
 

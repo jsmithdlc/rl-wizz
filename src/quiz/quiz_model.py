@@ -109,7 +109,12 @@ def init_quiz_app(model_name: str) -> CompiledStateGraph:
         }
 
     def save_question_in_database(state: QuizState):
-        add_question(state["question"], state["solved"])
+        add_question(
+            state["question"],
+            state["solved"],
+            state["answer"],
+            state["model_evaluation"],
+        )
 
     workflow.add_node("ask_question", ask_question)
     workflow.add_node("human_answer", human_answer)
