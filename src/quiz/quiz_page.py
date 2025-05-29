@@ -8,12 +8,6 @@ import streamlit as st
 from helpers import stream_llm_response_with_status
 from quiz.quiz_model import ask_question_stream, evaluate_answer_stream, init_quiz_app
 
-st.set_page_config(
-    page_title="Quiz",
-    page_icon="assets/wizzard_penguin.ico",
-    layout="wide",
-)
-
 quiz_app = init_quiz_app("gpt-4o-mini")
 
 

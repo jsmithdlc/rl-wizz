@@ -10,17 +10,23 @@ torch.classes.__path__ = []
 
 
 # Define the pages
-main_page = st.Page("main_page.py", title="Main Page", icon=":material/home:")
-chat_page = st.Page("chat/chat_page.py", title="Chat", icon="📇")
-chat_knowledge_page = st.Page(
-    "chat/chat_knowledge.py", title="Chat RAG Sources", icon="🧐"
+main_page = st.Page("main_page.py", title="Welcome", icon=":material/home:")
+chat_page = st.Page("chat/chat_page.py", title="Conversations", icon="📇")
+chat_knowledge_page = st.Page("chat/chat_knowledge.py", title="RAG Sources", icon="🧐")
+quiz_page = st.Page("quiz/quiz_page.py", title="Take Quiz", icon="🧠")
+quiz_results = st.Page("quiz/quiz_results_page.py", title="View Results", icon="✅")
+
+pg = st.navigation(
+    {
+        "": [main_page],
+        "Chat": [chat_page, chat_knowledge_page],
+        "Quiz": [quiz_page, quiz_results],
+    }
 )
-quiz_page = st.Page("quiz/quiz_page.py", title="Knowledge Quiz", icon="🧠")
-quiz_results = st.Page(
-    "quiz/quiz_results_page.py", title="Knowledge Quiz Results", icon="✅"
+
+st.set_page_config(
+    page_title="RL Wizz",
+    page_icon="assets/wizzard_penguin.ico",
+    layout="wide",
 )
-
-pg = st.navigation([main_page, chat_page, chat_knowledge_page, quiz_page, quiz_results])
-
-
 pg.run()

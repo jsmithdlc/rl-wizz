@@ -1,28 +1,31 @@
 import json
 import os
-from typing import Any
 
-import pandas as pd
 import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
 
 from database.database import fetch_past_questions
 from database.models import PastQuestion
-from helpers import sqlalchemy_model_to_dict
 from quiz.quiz_summary_model import QuizSummary, init_quiz_summary_wf
 
 # Display data
 st.header("Past Questions")
 
+N_QUESTIONS_SHOWN = 10
+
 # Past questions table
 past_questions = fetch_past_questions()
 past_questions = sorted(past_questions, key=lambda q: q.date, reverse=True)
-
-N_QUESTIONS_SHOWN = 10
 labels = [
     (i, min(i + N_QUESTIONS_SHOWN, len(past_questions)))
     for i in range(0, len(past_questions), N_QUESTIONS_SHOWN)
 ]
+
+if "question_selections" not in st.session_state:
+    st.session_state.question_selections = [
+        0,
+        min(len(past_questions), N_QUESTIONS_SHOWN),
+    ]
 
 
 def format_question_selector(label: tuple[int, int]) -> str:
@@ -52,11 +55,16 @@ def on_select_past_question(question: PastQuestion):
     st.write(question.feedback)
 
 
-col1, _ = st.columns((0.15, 0.85))
-question_selections = col1.selectbox(
-    " ", options=labels, format_func=format_question_selector
-)
-for i in range(question_selections[0], question_selections[1]):
+def on_select_question_range(selection_range: tuple[int, int]):
+    """
+    Set selected past questions
+    """
+    st.session_state.question_selections = selection_range
+
+
+for i in range(
+    st.session_state.question_selections[0], st.session_state.question_selections[1]
+):
     past_question = past_questions[i]
     with stylable_container(
         key=f"question_{i}",
@@ -81,7 +89,16 @@ for i in range(question_selections[0], question_selections[1]):
             on_click=on_select_past_question,
             args=[past_question],
         )
+col1, _ = st.columns((0.15, 0.85))
+col1.selectbox(
+    " ",
+    options=labels,
+    format_func=format_question_selector,
+    on_change=on_select_question_range,
+)
 
+
+### QUIZ EVALUATION SECTION
 st.header("AI Evaluation Reports")
 st.markdown(
     (

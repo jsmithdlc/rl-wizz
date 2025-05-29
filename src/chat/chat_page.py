@@ -21,12 +21,6 @@ RAG_DOCUMENTS_DIR = "./data/rag"
 
 os.makedirs(RAG_DOCUMENTS_DIR, exist_ok=True)
 
-st.set_page_config(
-    page_title="Main",
-    page_icon="assets/wizzard_penguin.ico",
-    layout="wide",
-)
-
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = load_conversations_as_dict()
     st.session_state.conversation_ids = list(st.session_state.chat_history.keys())
@@ -215,7 +209,6 @@ if st.session_state.current_conversation is not None:
     if prompt:
         current_conversation = st.session_state.current_conversation
         render_human_msg(prompt.text)
-        st.text(" ")
         llm_response = st.write_stream(
             stream_llm_response_with_status(
                 chat_stream(chat_app, prompt.text, current_conversation), "Generating"
