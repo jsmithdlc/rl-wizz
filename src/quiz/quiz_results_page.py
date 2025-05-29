@@ -37,7 +37,7 @@ def format_question_selector(label: tuple[int, int]) -> str:
     return f"{label[0]} - {label[1]}"
 
 
-@st.dialog("Quiz answer & feedback", width="large")
+@st.dialog("Past Quiz", width="large")
 def on_select_past_question(question: PastQuestion):
     """Display answer and feedback when past question is selected
 
@@ -45,7 +45,7 @@ def on_select_past_question(question: PastQuestion):
         question (PastQuestion): past question
     """
     cont = st.container(border=True)
-    cont.write(question.question)
+    cont.write(f"*{question.question}*")
     st.subheader(":speech_balloon: User's Answer")
     st.write(f":blue[{question.answer}]")
     st.subheader(":table_tennis_paddle_and_ball: Feedback")
