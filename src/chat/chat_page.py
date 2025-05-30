@@ -9,6 +9,7 @@ import streamlit as st
 
 from chat.chat_db import (
     delete_conversation,
+    fetch_conversation_title,
     load_conversations_as_dict,
     save_conversation,
     update_conversation,
@@ -24,6 +25,7 @@ os.makedirs(RAG_DOCUMENTS_DIR, exist_ok=True)
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = load_conversations_as_dict()
     st.session_state.conversation_ids = list(st.session_state.chat_history.keys())
+    st.session_state.conversations_titles = {}
     st.session_state.current_conversation = None
 
 
@@ -66,6 +68,17 @@ def on_set_conversation(c_index: str):
     st.session_state.current_conversation = c_index
 
 
+def get_conversation_title(c_index: str) -> str | None:
+    """Gets the conversation title, if any."""
+    if c_index in st.session_state.conversations_titles:
+        return st.session_state.conversations_titles[c_index]
+    conv_title = fetch_conversation_title(c_index)
+    if conv_title is None:
+        return None
+    st.session_state.conversations_titles[c_index] = conv_title.title
+    return conv_title.title
+
+
 @st.dialog("Confirm deletion")
 def on_delete_conversation(c_index: str):
     """Prompts confirmation dialog for erasing conversation with id `c_index`"""
@@ -79,6 +92,8 @@ def on_delete_conversation(c_index: str):
             if st.session_state.current_conversation == c_index
             else st.session_state.current_conversation
         )
+        if c_index in st.session_state.conversations_titles:
+            del st.session_state.conversations_titles[c_index]
         del st.session_state.chat_history[c_index]
         st.session_state.conversation_ids.remove(c_index)
         delete_conversation(c_index)
@@ -147,8 +162,9 @@ def render_chat_buttons():
     for conv_id in st.session_state.conversation_ids:
         col1, col2 = st.sidebar.columns([0.9, 0.05])
         with col1:
+            conv_title = get_conversation_title(conv_id)
             st.button(
-                f"Conversation {conv_id[-4:]}",
+                (f"Conversation {conv_id[-4:]}" if conv_title is None else conv_title),
                 on_click=on_set_conversation,
                 use_container_width=True,
                 args=[conv_id],
@@ -208,10 +224,17 @@ if st.session_state.current_conversation is not None:
 
     if prompt:
         current_conversation = st.session_state.current_conversation
+        coco_title = get_conversation_title(current_conversation)
         render_human_msg(prompt.text)
         llm_response = st.write_stream(
             stream_llm_response_with_status(
-                chat_stream(chat_app, prompt.text, current_conversation), "Generating"
+                chat_stream(
+                    chat_app,
+                    prompt.text,
+                    current_conversation,
+                    coco_title is not None,
+                ),
+                "Generating",
             )
         )
         st.text(" ")
@@ -221,6 +244,11 @@ if st.session_state.current_conversation is not None:
         update_conversation(
             current_conversation, st.session_state.chat_history[current_conversation]
         )
+        if (
+            coco_title is None
+            and get_conversation_title(current_conversation) is not None
+        ):
+            st.rerun()
 else:
     _, col2, _ = st.columns((0.2, 0.6, 0.2), vertical_alignment="center")
     container = col2.container(border=True)

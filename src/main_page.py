@@ -11,7 +11,7 @@ st.header("Reinforcement Learning Wizz")
 media_col, _, _ = st.columns([0.6, 0.2, 0.2])
 container = media_col.empty()
 container.image(
-    "assets/rl_wizz.png",
+    "assets/rl_wizz.webp",
     caption="The RL wizz exploring a virgin landscape. *Created with ChatGPT and Sora",
 )
 st.markdown(

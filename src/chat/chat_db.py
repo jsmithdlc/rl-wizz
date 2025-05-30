@@ -1,7 +1,16 @@
 import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Column, DateTime, String, create_engine, text
+from sqlalchemy import (
+    JSON,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    create_engine,
+    text,
+)
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -26,6 +35,13 @@ class Conversation(Base):
     id = Column(String, primary_key=True)
     date = Column(DateTime, default=datetime.datetime.now)
     messages = Column(JSON)
+
+
+class ConversationTitle(Base):
+    __tablename__ = "conversations_titles"
+    id = Column(Integer, primary_key=True)
+    conversation_id = Column(String, ForeignKey(Conversation.id))
+    title = Column(String)
 
 
 def init_db():
@@ -61,6 +77,24 @@ def load_conversations_as_dict() -> list[dict[str, Any]]:
         return {conv.id: conv.messages for conv in conversations}
 
 
+def load_conversation_titles() -> dict[str, str]:
+    """Load all conversation titles from db"""
+    with SessionLocal() as session:
+        titles = session.query(ConversationTitle).all()
+        return {title.conversation_id: title.title for title in titles}
+
+
+def fetch_conversation_title(conv_id: str) -> ConversationTitle | None:
+    """Load conversation title associated to id `conv_id`"""
+    with SessionLocal() as session:
+        title = (
+            session.query(ConversationTitle)
+            .filter(ConversationTitle.conversation_id == conv_id)
+            .first()
+        )
+        return title
+
+
 def save_conversation(conv_id: str, messages: list[tuple[str, str]]):
     """Save a conversation to the database"""
     conversation = Conversation(
@@ -71,6 +105,16 @@ def save_conversation(conv_id: str, messages: list[tuple[str, str]]):
         session.commit()
         session.refresh(conversation)
     return conversation
+
+
+def save_conversation_title(conv_id: str, title: str):
+    """Save conversation title to database"""
+    conv_title = ConversationTitle(conversation_id=conv_id, title=title)
+    with SessionLocal() as session:
+        session.add(conv_title)
+        session.commit()
+        session.refresh(conv_title)
+    return conv_title
 
 
 def update_conversation(conv_id: str, messages: list[tuple[str, str]]):
@@ -91,4 +135,7 @@ def delete_conversation(conv_id: str):
     """Deletes conversation from database"""
     with SessionLocal() as session:
         session.query(Conversation).filter(Conversation.id == conv_id).delete()
+        session.query(ConversationTitle).filter(
+            ConversationTitle.conversation_id == conv_id
+        ).delete()
         session.commit()

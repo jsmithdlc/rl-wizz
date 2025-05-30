@@ -12,6 +12,7 @@ from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors.chain_filter import LLMChainFilter
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI, OpenAI
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -19,6 +20,7 @@ from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
+from chat.chat_db import save_conversation_title
 from chat.vector_store import vector_store
 from database.database import update_chat_source_n_retrieved
 
@@ -106,6 +108,26 @@ def init_chat_app(
 
     tools = ToolNode([retrieve])
 
+    def set_conversation_title(state: MessagesState, config: RunnableConfig):
+        if not config["configurable"]["has_title"]:
+            prompt = [
+                SystemMessage(
+                    f"""Based on user message, try to detect a conversation title
+                with a meaningful topic (max 5 words). If not possible, simply return UNKNOWN
+
+                Message is: {state["messages"]}"""
+                )
+            ]
+            model.disable_streaming = True
+            response = model.invoke(prompt)
+            model.disable_streaming = False
+            if response.content != "UNKNOWN":
+                save_conversation_title(
+                    config["configurable"]["thread_id"], response.content
+                )
+
+        return {"messages": state["messages"]}
+
     # Step 1: query retrieval or respond directly
     def query_or_respond(state: MessagesState):
         """Generate tool call for retrieval or respond."""
@@ -147,11 +169,13 @@ def init_chat_app(
         return {"messages": [response]}
 
     # add chat model to graph
+    workflow.add_node("set_conversation_title", set_conversation_title)
     workflow.add_node("query_or_respond", query_or_respond)
     workflow.add_node("tools", tools)
     workflow.add_node("generate", generate)
 
-    workflow.set_entry_point("query_or_respond")
+    workflow.set_entry_point("set_conversation_title")
+    workflow.add_edge("set_conversation_title", "query_or_respond")
     workflow.add_conditional_edges(
         "query_or_respond",
         tools_condition,
@@ -171,11 +195,16 @@ def init_chat_app(
 
 
 def chat_stream(
-    wf: CompiledStateGraph, query: str, thread_id: str
+    wf: CompiledStateGraph, query: str, thread_id: str, has_title: bool
 ) -> Iterator[dict[str, Any] | Any]:
     """
     Trigger chat conversation stream
     """
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {
+        "configurable": {
+            "thread_id": thread_id,
+            "has_title": has_title,
+        }
+    }
     messages = [HumanMessage(query)]
     return wf.stream({"messages": messages}, config=config, stream_mode="messages")
