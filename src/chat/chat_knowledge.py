@@ -7,6 +7,10 @@ from helpers import sqlalchemy_model_to_dict
 
 # load datasources
 chat_sources = fetch_all_chat_source()
+if len(chat_sources) == 0:
+    st.info("No sources have been added! Nothing to show here")
+    st.stop()
+
 chat_sources_df = pd.DataFrame(
     [sqlalchemy_model_to_dict(source) for source in chat_sources]
 )

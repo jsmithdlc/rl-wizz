@@ -150,6 +150,9 @@ summaries = load_quiz_summaries()
 display_quiz_summaries(summaries)
 
 gen_new_container = st.empty()
+if len(past_questions) == 0:
+    st.info("No past questions available to run evaluation")
+    st.stop()
 gen_new = gen_new_container.button("New AI Evaluation")
 if gen_new:
     gen_new_container.empty()
