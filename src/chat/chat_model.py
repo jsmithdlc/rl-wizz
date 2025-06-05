@@ -27,10 +27,18 @@ from database.database import update_chat_source_n_retrieved
 load_dotenv()
 
 
-BASE_SYSTEM_MSG = (
-    "You are a helpful assistant, whose purpose is to help in learning and exploring the "
-    "area of reinforcement learning through question-answering tasks."
-)
+BASE_SYSTEM_MSG = """
+    You are a helpful assistant, whose purpose is to help in learning and exploring the
+    area of reinforcement learning through question-answering tasks.
+
+    Writing math formulas:
+    You have a MathJax render environment.
+    - Any LaTeX text between single dollar sign ($) will be rendered as a TeX formula;
+    - Use $(tex_formula)$ in-line delimiters to display equations instead of backslash;
+    - The render environment only uses $ (single dollarsign) as a container delimiter, never output $$.
+    Example: $x^2 + 3x$ is output for "x² + 3x" to appear as TeX.
+
+"""
 
 
 def _parse_retrieved_into_context(retrieved_docs: list[Document]) -> str:
@@ -73,25 +81,30 @@ def _update_source_retrieval_count(documents: list[Document]):
 
 @st.cache_resource
 def init_chat_app(
-    model_name: str, temperature: float | None = None
+    model_name: str, temperature: float = 0.0, rag_n_docs: int = 5
 ) -> CompiledStateGraph:
     """Initialize chat LangGraph application
 
     Args:
         model_name (str): name of the OpenAI's LLM model to use
-        temperature (float | None, optional): temperature setting for the chat model.
+        temperature (float): temperature setting for the chat model.
+        rag_n_docs (int): number of documents used during RAG. Defaults to 5.
         Defaults to None.
 
     Returns:
         CompiledStateGraph: chat LangGraph application
     """
+
     workflow = StateGraph(state_schema=MessagesState)
     model = ChatOpenAI(model_name=model_name, temperature=temperature)
     llm = OpenAI(temperature=0)
 
     _filter = LLMChainFilter.from_llm(llm)
     base_retriever = vector_store.as_retriever(
-        search_kwargs={"k": 5, "filter": {"detection_class_prob": {"$gte": 0.75}}}
+        search_kwargs={
+            "k": rag_n_docs,
+            "filter": {"detection_class_prob": {"$gte": 0.75}},
+        }
     )
     compression_retriever = ContextualCompressionRetriever(
         base_compressor=_filter, base_retriever=base_retriever
@@ -151,7 +164,7 @@ def init_chat_app(
         system_message_content = (
             f"{BASE_SYSTEM_MSG}"
             "Use the following pieces of retrieved context to answer "
-            "the question. If you don't know the answer, say that you "
+            "the question. If you don't know the answer, say politely that you "
             "don't know."
             "\n\n"
             f"{docs_content}"

@@ -143,7 +143,7 @@ def render_chat_buttons():
     Render buttons for chat management (creating/choosing conversation, adding new material for RAG)
     """
     # buttons for adding new conversation and adding new files
-    cols = st.sidebar.columns(3)
+    cols = st.sidebar.columns((0.35, 0.35, 0.3))
     cols[0].button(
         "New",
         help="Start a new conversation",
@@ -185,31 +185,33 @@ def store_temperature_value():
     st.session_state["model_temperature"] = st.session_state["_model_temperature"]
 
 
-model_name = st.sidebar.selectbox("Chat model", ("gpt-4o-mini"))
-
-chat_app = init_chat_app(
-    model_name,
-    temperature=(
-        st.session_state["model_temperature"]
-        if "model_temperature" in st.session_state
-        else None
-    ),
-)
+def store_rag_n_docs():
+    st.session_state["rag_n_docs"] = st.session_state["_rag_n_docs"]
 
 
-# save temperature in session
 temperature = st.sidebar.slider(
     "Model temperature",
     0.0,
     1.0,
-    value=(
-        st.session_state["model_temperature"]
-        if "model_temperature" in st.session_state
-        else None
-    ),
+    value=st.session_state.get("model_temperature"),
     key="_model_temperature",
     on_change=store_temperature_value,
 )
+
+rag_n_docs = st.sidebar.slider(
+    "RAG Number of Documents",
+    min_value=5,
+    max_value=40,
+    step=5,
+    value=st.session_state.get("rag_n_docs"),
+    key="_rag_n_docs",
+    on_change=store_rag_n_docs,
+)
+
+model_name = st.sidebar.selectbox("Chat model", ("gpt-4o-mini"))
+
+chat_app = init_chat_app(model_name, temperature=temperature, rag_n_docs=rag_n_docs)
+
 
 render_chat_buttons()
 
