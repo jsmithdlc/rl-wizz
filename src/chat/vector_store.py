@@ -12,7 +12,7 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_unstructured import UnstructuredLoader
 from unstructured.cleaners.core import clean_extra_whitespace
 
-from database.database import add_chat_source
+from chat.db.database import add_chat_source
 
 load_dotenv()
 

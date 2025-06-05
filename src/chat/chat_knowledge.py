@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from database.database import fetch_all_chat_source
+from chat.db.database import fetch_all_chat_source
 from helpers import sqlalchemy_model_to_dict
 
 # load datasources

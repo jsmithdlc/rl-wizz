@@ -13,7 +13,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command, interrupt
 from typing_extensions import TypedDict
 
-from database.database import add_question, fetch_past_questions
+from quiz.db import add_question, fetch_past_questions
 
 load_dotenv()
 

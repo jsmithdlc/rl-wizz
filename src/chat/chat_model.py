@@ -20,9 +20,8 @@ from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
-from chat.chat_db import save_conversation_title
+from chat.db.database import save_conversation_title, update_chat_source_n_retrieved
 from chat.vector_store import vector_store
-from database.database import update_chat_source_n_retrieved
 
 load_dotenv()
 

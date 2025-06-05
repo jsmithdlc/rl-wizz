@@ -9,7 +9,7 @@ from langgraph.graph import START, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, Field
 
-from database.database import fetch_past_questions
+from quiz.db import fetch_past_questions
 
 
 class QuizSummaryFormatter(BaseModel):

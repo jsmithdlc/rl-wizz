@@ -1,19 +1,11 @@
 import datetime
 from typing import Any
 
-from sqlalchemy import (
-    JSON,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-    create_engine,
-    text,
-)
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+from chat.db.models import Base, ChatSource, Conversation, ConversationTitle
 from utils.logger import setup_logger
 
 # Set up logging
@@ -21,27 +13,9 @@ logger = setup_logger(__name__)
 
 DATABASE_URL = "sqlite:///data/conversations.db"
 
-Base = declarative_base()
-
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(bind=engine)
-
-
-class Conversation(Base):
-    """A conversation between a user and an AI"""
-
-    __tablename__ = "conversations"
-    id = Column(String, primary_key=True)
-    date = Column(DateTime, default=datetime.datetime.now)
-    messages = Column(JSON)
-
-
-class ConversationTitle(Base):
-    __tablename__ = "conversations_titles"
-    id = Column(Integer, primary_key=True)
-    conversation_id = Column(String, ForeignKey(Conversation.id))
-    title = Column(String)
 
 
 def init_db():
@@ -139,3 +113,77 @@ def delete_conversation(conv_id: str):
             ConversationTitle.conversation_id == conv_id
         ).delete()
         session.commit()
+
+
+def fetch_chat_source_by_name(source_name: str) -> ChatSource | None:
+    """Fetch chat source by its name
+
+    Args:
+        source_name (str): name of the data source to fetch
+
+    Returns:
+        ChatSource | None: the retrieved data source, if any
+    """
+    with SessionLocal() as session:
+        return (
+            session.query(ChatSource)
+            .filter(ChatSource.source_name == source_name)
+            .first()
+        )
+
+
+def fetch_all_chat_source() -> list[ChatSource]:
+    """Fetches all ChatSource stored in database"""
+    with SessionLocal() as session:
+        return session.query(ChatSource).all()
+
+
+def add_chat_source(source_name: str, doc_type: str, n_related_documents: int):
+    """Stores new chat datasource. Replace existing one if already exists
+
+    Args:
+        source_name (str): name of this datasource. Can be filename, url, etc
+        doc_type (str): document type
+        n_related_documents (int): number of extracted documents associated to this datasource
+    """
+    with SessionLocal() as session:
+        chat_source = (
+            session.query(ChatSource)
+            .filter(ChatSource.source_name == source_name)
+            .first()
+        )
+        if not chat_source:
+            chat_source = ChatSource(
+                source_name=source_name,
+                doc_type=doc_type,
+                n_related_documents=n_related_documents,
+                date_added=datetime.datetime.now(),
+            )
+            session.add(chat_source)
+            session.commit()
+        else:
+            chat_source.doc_type = doc_type
+            chat_source.n_related_documents = n_related_documents
+            chat_source.date_added = datetime.datetime.now()
+            session.commit()
+            session.refresh(chat_source)
+
+
+def update_chat_source_n_retrieved(source_name: str, new_calls: int):
+    """Updates the number of retrieval of source by summing new calls
+
+    Args:
+        source_name (str): data source name
+        new_calls (int): count of new retrievals for this data source
+    """
+    with SessionLocal() as session:
+        chat_source = (
+            session.query(ChatSource)
+            .filter(ChatSource.source_name == source_name)
+            .first()
+        )
+        if not chat_source:
+            return
+        chat_source.n_times_retrieved += new_calls
+        session.commit()
+        session.refresh(chat_source)

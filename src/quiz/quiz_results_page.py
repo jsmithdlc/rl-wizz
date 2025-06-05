@@ -4,8 +4,7 @@ import os
 import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
 
-from database.database import fetch_past_questions
-from database.models import PastQuestion
+from quiz.db import PastQuestion, fetch_past_questions
 from quiz.quiz_summary_model import QuizSummary, init_quiz_summary_wf
 
 # Display data

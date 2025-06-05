@@ -8,14 +8,14 @@ import uuid
 import streamlit as st
 from streamlit.runtime.uploaded_file_manager import UploadedFile
 
-from chat.chat_db import (
+from chat.chat_model import chat_stream, init_chat_app
+from chat.db.database import (
     delete_conversation,
     fetch_conversation_title,
     load_conversations_as_dict,
     save_conversation,
     update_conversation,
 )
-from chat.chat_model import chat_stream, init_chat_app
 from chat.vector_store import pdf_to_vector_store
 from helpers import stream_llm_response_with_status
 
