@@ -6,6 +6,7 @@ import os
 import uuid
 
 import streamlit as st
+from streamlit.runtime.uploaded_file_manager import UploadedFile
 
 from chat.chat_db import (
     delete_conversation,
@@ -52,6 +53,7 @@ def render_human_msg(prompt_text: str):
 
 
 def render_chat_history():
+    """Renders the entire chat history of the current conversation"""
     for role, msg in st.session_state.chat_history[
         st.session_state.current_conversation
     ]:
@@ -109,7 +111,12 @@ def on_new_conversation():
     save_conversation(new_id, [])
 
 
-def load_pdfs(files):
+def load_pdfs(files: list[UploadedFile]):
+    """Loads pdfs into vector store
+
+    Args:
+        files (list[UploadedFile]): list of uploaded pdf files.
+    """
     for uploaded_file in files:
         st.write(f"adding {uploaded_file.name} to database")
         file_path = os.path.join(RAG_DOCUMENTS_DIR, uploaded_file.name)
@@ -119,7 +126,10 @@ def load_pdfs(files):
 
 
 @st.dialog("Add material")
-def add_material_dialog():
+def on_new_rag_source():
+    """
+    Dialog interface for adding new sources for RAG
+    """
     selected_option = st.pills("Type", ["pdf", "website"])
     if selected_option == "pdf":
         files_container = st.empty()
@@ -156,7 +166,7 @@ def render_chat_buttons():
         help="Add documents / media to enhance this bot's knowledge",
         type="primary",
         icon="📚",
-        on_click=add_material_dialog,
+        on_click=on_new_rag_source,
     )
     # buttons to pick conversations
     for conv_id in st.session_state.conversation_ids:
@@ -182,10 +192,12 @@ def render_chat_buttons():
 
 
 def store_temperature_value():
+    """Stores model temperature into more persistant session state variable"""
     st.session_state["model_temperature"] = st.session_state["_model_temperature"]
 
 
 def store_rag_n_docs():
+    """Stores number of documents for RAG into more persistant session state variable"""
     st.session_state["rag_n_docs"] = st.session_state["_rag_n_docs"]
 
 
@@ -265,5 +277,5 @@ else:
         "Add new sources to the chatbot's knowledge base.",
         type="secondary",
         icon="📚",
-        on_click=add_material_dialog,
+        on_click=on_new_rag_source,
     )
