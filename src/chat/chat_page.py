@@ -12,7 +12,7 @@ from chat.chat_model import chat_stream, init_chat_app
 from chat.db.database import (
     delete_conversation,
     fetch_conversation_title,
-    load_conversations_as_dict,
+    fetch_conversations_as_dict,
     save_conversation,
     update_conversation,
 )
@@ -24,7 +24,7 @@ RAG_DOCUMENTS_DIR = "./data/rag"
 os.makedirs(RAG_DOCUMENTS_DIR, exist_ok=True)
 
 if "chat_history" not in st.session_state:
-    st.session_state.chat_history = load_conversations_as_dict()
+    st.session_state.chat_history = fetch_conversations_as_dict()
     st.session_state.conversation_ids = list(st.session_state.chat_history.keys())
     st.session_state.conversations_titles = {}
     st.session_state.current_conversation = None

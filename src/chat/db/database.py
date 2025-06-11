@@ -1,9 +1,13 @@
+"""
+Database helper functions for chat-related operations
+"""
+
 import datetime
 from typing import Any
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from chat.db.models import Base, ChatSource, Conversation, ConversationTitle
 from utils.logger import setup_logger
@@ -44,22 +48,22 @@ def init_db():
 init_db()
 
 
-def load_conversations_as_dict() -> list[dict[str, Any]]:
-    """Load all conversations from the database"""
+def fetch_conversations_as_dict() -> list[dict[str, Any]]:
+    """Fetch all conversations from the database"""
     with SessionLocal() as session:
         conversations = session.query(Conversation).all()
         return {conv.id: conv.messages for conv in conversations}
 
 
-def load_conversation_titles() -> dict[str, str]:
-    """Load all conversation titles from db"""
+def fetch_conversation_titles() -> dict[str, str]:
+    """Fetch all conversation titles from db"""
     with SessionLocal() as session:
         titles = session.query(ConversationTitle).all()
         return {title.conversation_id: title.title for title in titles}
 
 
 def fetch_conversation_title(conv_id: str) -> ConversationTitle | None:
-    """Load conversation title associated to id `conv_id`"""
+    """Fetch conversation title associated to id `conv_id`"""
     with SessionLocal() as session:
         title = (
             session.query(ConversationTitle)

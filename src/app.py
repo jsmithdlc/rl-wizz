@@ -18,7 +18,7 @@ quiz_results = st.Page("quiz/quiz_results_page.py", title="View Results", icon="
 
 pg = st.navigation(
     {
-        "": [main_page],
+        "Main": [main_page],
         "Chat": [chat_page, chat_knowledge_page],
         "Quiz": [quiz_page, quiz_results],
     }
