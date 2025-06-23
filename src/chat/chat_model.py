@@ -49,6 +49,7 @@ def _parse_retrieved_into_context(retrieved_docs: list[Document]) -> str:
         "element_id",
         "parent_id",
         "filetype",
+        "url",
     }
     docs_strs = []
     for doc in retrieved_docs:
@@ -70,7 +71,7 @@ def _update_source_retrieval_count(documents: list[Document]):
     """
     retrieved_sources: dict[str, any] = {}
     for doc in documents:
-        source_name = doc.metadata["source"]
+        source_name = doc.metadata.get("source") or doc.metadata.get("url")
         if source_name not in retrieved_sources:
             retrieved_sources[source_name] = 0
         retrieved_sources[source_name] += 1

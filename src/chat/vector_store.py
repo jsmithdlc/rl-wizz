@@ -46,13 +46,14 @@ def _add_documents_to_vector_store(
             del doc.metadata["links"]
         prep_docs.append(doc)
 
-    index(
+    result = index(
         prep_docs,
         record_manager=record_manager,
         vector_store=vector_store,
         cleanup="incremental",
         source_id_key="source" if source_type == "pdf" else "url",
     )
+    logging.info(result)
     logging.info("Added documents to pinecone DB")
 
 
@@ -79,11 +80,10 @@ def source_to_vector_store(source_path: str, source_type: Literal["pdf", "websit
     else:
         raise ValueError("Unrecognized source_type %s", source_type)
     logging.info("Retrieved: %s documents from pdf", len(docs))
-    print(f"Docs: {docs}")
     if len(docs) > 0:
         _add_documents_to_vector_store(docs, source_type)
         add_chat_source(
             source_name=source_path,
-            doc_type="pdf",
+            doc_type=source_type,
             n_related_documents=len(docs),
         )
