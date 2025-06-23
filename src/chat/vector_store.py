@@ -2,6 +2,7 @@
 
 import logging
 import os
+from typing import Literal
 
 import pinecone as pc
 from dotenv import load_dotenv
@@ -35,7 +36,9 @@ record_manager.create_schema()
 
 
 # TODO: avoid adding duplicate content from same pdf with different sources.
-def _add_documents_to_vector_store(documents: list[Document]):
+def _add_documents_to_vector_store(
+    documents: list[Document], source_type: Literal["pdf", "website"]
+):
     """Add documents to vector store"""
     prep_docs = []
     for doc in documents:
@@ -48,22 +51,39 @@ def _add_documents_to_vector_store(documents: list[Document]):
         record_manager=record_manager,
         vector_store=vector_store,
         cleanup="incremental",
-        source_id_key="source",
+        source_id_key="source" if source_type == "pdf" else "url",
     )
     logging.info("Added documents to pinecone DB")
 
 
-def pdf_to_vector_store(pdf_path: str):
-    """Load PDF and store in vector store"""
-    loader = UnstructuredLoader(
-        file_path=pdf_path, strategy="hi_res", post_processors=[clean_extra_whitespace]
-    )
-    docs = [doc for doc in loader.lazy_load() if doc.metadata.pop("coordinates", None)]
+def source_to_vector_store(source_path: str, source_type: Literal["pdf", "website"]):
+    """
+    Processes and adds a source into the vector store
+
+    Args:
+        source_path (str): path to source file or url
+        source_type (Literal[str]): type of source. Can be pdf or website for now.
+    """
+    if source_type == "pdf":
+        loader = UnstructuredLoader(
+            file_path=source_path,
+            strategy="hi_res",
+            post_processors=[clean_extra_whitespace],
+        )
+        docs = [
+            doc for doc in loader.lazy_load() if doc.metadata.pop("coordinates", None)
+        ]
+    elif source_type == "website":
+        loader = UnstructuredLoader(web_url=source_path)
+        docs = list(loader.lazy_load())
+    else:
+        raise ValueError("Unrecognized source_type %s", source_type)
     logging.info("Retrieved: %s documents from pdf", len(docs))
+    print(f"Docs: {docs}")
     if len(docs) > 0:
-        _add_documents_to_vector_store(docs)
+        _add_documents_to_vector_store(docs, source_type)
         add_chat_source(
-            source_name=pdf_path,
+            source_name=source_path,
             doc_type="pdf",
             n_related_documents=len(docs),
         )

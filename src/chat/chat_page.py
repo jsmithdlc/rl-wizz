@@ -16,7 +16,7 @@ from chat.db.database import (
     save_conversation,
     update_conversation,
 )
-from chat.vector_store import pdf_to_vector_store
+from chat.vector_store import source_to_vector_store
 from helpers import stream_llm_response_with_status
 
 RAG_DOCUMENTS_DIR = "./data/rag"
@@ -122,7 +122,7 @@ def load_pdfs(files: list[UploadedFile]):
         file_path = os.path.join(RAG_DOCUMENTS_DIR, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
-        pdf_to_vector_store(file_path)
+        source_to_vector_store(file_path, source_type="pdf")
 
 
 @st.dialog("Add material")
@@ -146,6 +146,15 @@ def on_new_rag_source():
                 with st.status("Processing files"):
                     load_pdfs(files)
                 st.rerun()
+    elif selected_option == "website":
+        website_url = st.text_input("enter url here")
+        confirm_container = st.empty()
+        confirm = confirm_container.button("Confirm")
+        if confirm and len(website_url) > 0:
+            confirm_container.empty()
+            with st.status("Processing website"):
+                source_to_vector_store(website_url, "website")
+            st.rerun()
 
 
 def render_chat_buttons():
