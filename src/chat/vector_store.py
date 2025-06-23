@@ -53,7 +53,7 @@ def _add_documents_to_vector_store(
         cleanup="incremental",
         source_id_key="source" if source_type == "pdf" else "url",
     )
-    logging.info(result)
+    logging.debug("Pinecone database op result: %s", result)
     logging.info("Added documents to pinecone DB")
 
 
